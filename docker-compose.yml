@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # 3-Node etcd Raft Cluster
+  etcd1:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: lockforge-etcd1
+    environment:
+      - ETCD_NAME=etcd1
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd1:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd1:2379
+      - ETCD_INITIAL_CLUSTER_TOKEN=lockforge-etcd-cluster
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    ports:
+      - "2379:2379"
+    networks:
+      - lockforge-net
+
+  etcd2:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: lockforge-etcd2
+    environment:
+      - ETCD_NAME=etcd2
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd2:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd2:2379
+      - ETCD_INITIAL_CLUSTER_TOKEN=lockforge-etcd-cluster
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    ports:
+      - "22379:2379"
+    networks:
+      - lockforge-net
+
+  etcd3:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: lockforge-etcd3
+    environment:
+      - ETCD_NAME=etcd3
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd3:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd3:2379
+      - ETCD_INITIAL_CLUSTER_TOKEN=lockforge-etcd-cluster
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    ports:
+      - "32379:2379"
+    networks:
+      - lockforge-net
+
+  # Redis Read-Through Cache & Redlock Benchmark Target
+  redis:
+    image: redis:7-alpine
+    container_name: lockforge-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - lockforge-net
+
+  # LockForge Backend Server (gRPC :50051 + HTTP/SSE :8080)
+  lockforge-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lockforge-server
+    environment:
+      - ETCD_ENDPOINTS=etcd1:2379,etcd2:2379,etcd3:2379
+      - REDIS_ADDR=redis:6379
+      - GRPC_PORT=50051
+      - HTTP_PORT=8080
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+      - redis
+    networks:
+      - lockforge-net
+
+  # LockForge React Dashboard
+  lockforge-ui:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: lockforge-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - lockforge-server
+    networks:
+      - lockforge-net
+
+networks:
+  lockforge-net:
+    driver: bridge

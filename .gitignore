@@ -1,0 +1,42 @@
+# Compiled Root Binaries
+/lockforge-server
+/lockforge-cli
+/lockforge-benchmark
+/protected-resource
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test and Coverage Artifacts
+coverage.txt
+*.log
+
+# Frontend Dependencies and Builds
+web/node_modules/
+web/dist/
+web/.vite/
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+
+# OS Artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment & IDE
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.swp
+*.swo

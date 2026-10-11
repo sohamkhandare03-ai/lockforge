@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: lockforge
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/status
+    envVars:
+      - key: HTTP_PORT
+        value: 8080
+      - key: GRPC_PORT
+        value: 50051

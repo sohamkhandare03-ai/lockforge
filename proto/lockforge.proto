@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package lockforge.v1;
+
+option go_package = "github.com/lockforge/lockforge/proto;lockforge_v1";
+
+// LockService provides distributed locking with strong consensus, lease TTLs,
+// and monotonic fencing tokens.
+service LockService {
+  // AcquireLock attempts to atomically acquire a lock on a resource.
+  rpc AcquireLock(AcquireLockRequest) returns (AcquireLockResponse);
+
+  // ReleaseLock safely releases an acquired lock.
+  rpc ReleaseLock(ReleaseLockRequest) returns (ReleaseLockResponse);
+
+  // RenewLease extends the TTL of an active lease before it expires.
+  rpc RenewLease(RenewLeaseRequest) returns (RenewLeaseResponse);
+
+  // InspectLock returns real-time status and metadata of a resource lock.
+  rpc InspectLock(InspectLockRequest) returns (InspectLockResponse);
+
+  // GetActiveLocks returns all currently held locks across the cluster.
+  rpc GetActiveLocks(GetActiveLocksRequest) returns (GetActiveLocksResponse);
+
+  // StreamUpdates streams real-time lock lifecycle events to clients.
+  rpc StreamUpdates(StreamUpdatesRequest) returns (stream LockEvent);
+
+  // GetSystemEvents retrieves historical events from the rolling audit buffer.
+  rpc GetSystemEvents(GetSystemEventsRequest) returns (GetSystemEventsResponse);
+}
+
+// AcquireLockRequest defines parameters for acquiring a lock.
+message AcquireLockRequest {
+  string resource_id = 1;
+  string client_id = 2;
+  int64 ttl_seconds = 3;
+}
+
+// AcquireLockResponse provides the acquisition result and fencing token.
+message AcquireLockResponse {
+  bool acquired = 1;
+  string resource_id = 2;
+  string client_id = 3;
+  int64 lease_id = 4;
+  int64 fencing_token = 5;
+  int64 acquired_at_unix_ms = 6;
+  int64 expires_at_unix_ms = 7;
+  string error_message = 8;
+  string current_owner_id = 9;
+}
+
+// ReleaseLockRequest defines parameters to release a lock.
+message ReleaseLockRequest {
+  string resource_id = 1;
+  string client_id = 2;
+  int64 lease_id = 3;
+  int64 fencing_token = 4;
+}
+
+// ReleaseLockResponse indicates the release status.
+message ReleaseLockResponse {
+  bool released = 1;
+  string resource_id = 2;
+  string message = 3;
+}
+
+// RenewLeaseRequest defines parameters to renew an active lease.
+message RenewLeaseRequest {
+  string resource_id = 1;
+  string client_id = 2;
+  int64 lease_id = 3;
+  int64 ttl_seconds = 4;
+}
+
+// RenewLeaseResponse indicates the renewal result.
+message RenewLeaseResponse {
+  bool renewed = 1;
+  string resource_id = 2;
+  int64 new_expires_at_unix_ms = 3;
+  string message = 4;
+}
+
+// InspectLockRequest specifies the resource to inspect.
+message InspectLockRequest {
+  string resource_id = 1;
+}
+
+// InspectLockResponse returns current lock state and metadata.
+message InspectLockResponse {
+  string resource_id = 1;
+  bool is_locked = 2;
+  string owner_id = 3;
+  int64 lease_id = 4;
+  int64 fencing_token = 5;
+  int64 acquired_at_unix_ms = 6;
+  int64 expires_at_unix_ms = 7;
+  int64 ttl_remaining_seconds = 8;
+}
+
+// LockMetadata stores full details of a lock in etcd.
+message LockMetadata {
+  string resource_id = 1;
+  string owner_id = 2;
+  int64 lease_id = 3;
+  int64 fencing_token = 4;
+  int64 acquired_at_unix_ms = 5;
+  int64 expires_at_unix_ms = 6;
+  int64 ttl_seconds = 7;
+}
+
+// GetActiveLocksRequest requests all current locks.
+message GetActiveLocksRequest {}
+
+// GetActiveLocksResponse contains the list of active locks.
+message GetActiveLocksResponse {
+  repeated LockMetadata locks = 1;
+}
+
+// StreamUpdatesRequest initiates an event stream.
+message StreamUpdatesRequest {}
+
+// LockEventType enumerates lifecycle events.
+enum LockEventType {
+  LOCK_EVENT_TYPE_UNSPECIFIED = 0;
+  LOCK_EVENT_TYPE_ACQUIRED = 1;
+  LOCK_EVENT_TYPE_RELEASED = 2;
+  LOCK_EVENT_TYPE_RENEWED = 3;
+  LOCK_EVENT_TYPE_EXPIRED = 4;
+  LOCK_EVENT_TYPE_STALE_WRITE_REJECTED = 5;
+  LOCK_EVENT_TYPE_WRITE_ACCEPTED = 6;
+  LOCK_EVENT_TYPE_QUORUM_LOST = 7;
+  LOCK_EVENT_TYPE_QUORUM_RESTORED = 8;
+}
+
+// LockEvent encapsulates a real-time event.
+message LockEvent {
+  string event_id = 1;
+  LockEventType event_type = 2;
+  string resource_id = 3;
+  string client_id = 4;
+  int64 fencing_token = 5;
+  int64 lease_id = 6;
+  int64 timestamp_unix_ms = 7;
+  string details = 8;
+}
+
+// GetSystemEventsRequest requests recent events.
+message GetSystemEventsRequest {
+  int32 limit = 1;
+}
+
+// GetSystemEventsResponse returns recent events.
+message GetSystemEventsResponse {
+  repeated LockEvent events = 1;
+}
