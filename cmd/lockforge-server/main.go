@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -32,6 +33,20 @@ func main() {
 	flag.Parse()
 
 	// Read environment overrides
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		if p, err := strconv.Atoi(envPort); err == nil {
+			*httpPort = p
+		}
+	} else if envHTTP := os.Getenv("HTTP_PORT"); envHTTP != "" {
+		if p, err := strconv.Atoi(envHTTP); err == nil {
+			*httpPort = p
+		}
+	}
+	if envGRPC := os.Getenv("GRPC_PORT"); envGRPC != "" {
+		if p, err := strconv.Atoi(envGRPC); err == nil {
+			*grpcPort = p
+		}
+	}
 	if envEndpoints := os.Getenv("ETCD_ENDPOINTS"); envEndpoints != "" && *etcdEndpoints == "" {
 		*etcdEndpoints = envEndpoints
 	}
