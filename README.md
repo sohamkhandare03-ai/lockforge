@@ -199,3 +199,26 @@ lockforge/
 
 - Comprehensive Project Report: [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md)
 - 5-Minute Presentation & Viva Script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
+- Online Cloud Deployment Guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+---
+
+## Deploying to GitHub & Online Cloud
+
+### 1. Push to GitHub
+```bash
+# Push with GitHub CLI
+gh auth login
+gh repo create lockforge --public --source=. --remote=origin --push
+
+# Or add your repository URL manually:
+git remote add origin https://github.com/<your-username>/lockforge.git
+git push -u origin main
+```
+
+### 2. Deploy Online (Free 1-Click Hosting)
+- **Render**: Connect your GitHub repo to [Render](https://dashboard.render.com) (uses included `render.yaml`).
+- **Railway**: Connect your GitHub repo to [Railway](https://railway.app) (uses included `railway.json`).
+- **Fly.io**: Run `fly launch --now` (uses included `fly.toml`).
+- **Full Guide**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
