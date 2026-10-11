@@ -11,6 +11,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg)]()
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sohamkhandare03-ai/lockforge)
 
+👉 **Live Cloud Demo**: [https://lockforge-mlo4.onrender.com](https://lockforge-mlo4.onrender.com)
+
 ---
 
 ## Architecture Overview
